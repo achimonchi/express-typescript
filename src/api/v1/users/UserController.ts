@@ -1,41 +1,180 @@
-import {Request, Response} from 'express';
-import IController from '../../interfaces/IController';
+import { Request, Response } from "express";
+import IController from "./IController";
 
-class UserController implements IController{
-    fetchAll(req: Request, res: Response): Response{
-        return res.status(200).json({
-            method:"Fetch All",
-            status:200
-        })
-    }
+const db = require("../../../db/models/index.js")
 
-    fetchByID(req: Request, res: Response): Response{
-        return res.status(200).json({
-            method:"Fetch By ID",
-            status:200,
-        })
-    }
+class UserController implements IController {
+    public findAll = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const {limit, page} = req.query;
 
-    create(req: Request, res: Response): Response{
-        return res.status(200).json({
-            method:"Create User",
-            status:200,
-        })
-    }
+            let limitData: number = 5;
+            let pageData: number = 0;
 
-    update(req: Request, res: Response): Response{
-        return res.status(200).json({
-            method:"Update User",
-            status:200,
-        })
-    }
+            if(limit){
+                limitData = +limit;
+            }
 
-    delete(req: Request, res: Response): Response{
-        return res.status(200).json({
-            method:"Delete User",
-            status:200
-        })
-    }
+            if(page){
+                pageData = +page;
+            }
+
+            const offset: number = (limitData * pageData);
+
+            const users = await db.user.findAndCountAll({limit: limitData, offset: offset});
+
+            if(users.rows.length === 0){
+                return Promise.resolve(res.send({status: 404, msg: "There is no data !"}));    
+            }
+
+            let data = {
+                limit:limitData, 
+                page: pageData,
+                count : users.count,
+                users: users.rows
+            }
+
+            return Promise.resolve(res.send(
+                {
+                    status: 200, 
+                    data
+                }
+            ));
+        } catch (error) {
+            return Promise.resolve(res.send({
+                status: 500,
+                msg : "There is something wrong !"
+            }));
+        }
+    };
+    public findByID = async(req: Request, res: Response): Promise<Response> => {
+        try {
+            const {id} = req.params;
+
+            const idUser: number = +id;
+            const user = await db.user.findByPk(idUser);
+            if(user){
+                return Promise.resolve(res.send(user));
+            } else {
+                return Promise.resolve(res.send({
+                    status: 404,
+                    msg : "There is no data with this ID !"
+                }));
+            }
+
+        } catch (error) {
+            console.log(error)
+            return Promise.resolve(res.send("OKE"));
+        }
+    };
+
+    public create = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const {fullname, majors, email} = req.body;
+            const user = {
+                fullname : fullname,
+                majors : majors,
+                email : email
+            };
+
+            const createdUser = await db.user.create(user);
+            
+            if(createdUser){
+                let data = {
+                    status : 201,
+                    msg: "User created !",
+                    data : createdUser
+                }
+                return Promise.resolve(res.send(data));
+            } else {
+                let data = {
+                    status : 400,
+                    msg : "User fail to create !"
+                };
+                return Promise.resolve(res.send(data));
+            }
+        } catch (error) {
+            let data = {
+                status : 500,
+                msg : error
+            };
+            console.log(error)
+            return Promise.resolve(res.send(data));
+        }
+
+    }; 
+
+    public update = async(req: Request, res: Response): Promise<Response> => {
+        try {
+            const {id} = req.params;
+            if(!id){
+                return Promise.resolve(res.send({status: 400, msg:"Provide the id User"}));
+            }
+
+            const idUser = +id;
+
+            const {fullname, majors, email} = req.body;
+            const user = {
+                fullname : fullname,
+                majors : majors,
+                email : email
+            };
+
+
+
+            const updated = await db.user.update({fullname, majors, email}, {where: {id : idUser} });
+            if(updated){
+                return Promise.resolve(res.send({
+                    status: 200,
+                    msg :"Update success !",
+                    data : user
+                }));
+            } else {
+                return Promise.resolve(res.send({
+                    status: 400,
+                    msg :"Update fail",
+                }));
+            }
+            
+        } catch (error) {
+            return Promise.resolve(res.send({
+                status: 500,
+                msg :error,
+            }));
+        }
+        
+    };
+
+    public delete = async(req: Request, res: Response): Promise<Response> => {
+        try {
+            const {id} = req.params;
+            if(!id){
+                return Promise.resolve(res.send({status: 400, msg:"Provide the id User"}));
+            }
+
+            const idUser = +id;
+
+            const deleteData = await db.user.destroy({where: {id:idUser}});
+            
+            if(deleteData){
+                return Promise.resolve(res.send({
+                    status: 200,
+                    msg :"Delete success !",
+                }));
+            } else {
+                return Promise.resolve(res.send({
+                    status: 400,
+                    msg :"Delete fail",
+                }));
+            }
+        } catch (error) {
+            return Promise.resolve(res.send({
+                status: 500,
+                msg :"There is something error",
+            }));
+            
+        }
+    };
 }
 
 export default UserController;

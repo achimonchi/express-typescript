@@ -1,25 +1,27 @@
-import {Router, Request, Response} from "express";
-import IRouter from "../../interfaces/IRouter";
+import express, {Request, Response, Router} from "express";
+
+import IRoutes from "../../interfaces/IRoutes";
 import UserController from "./UserController";
 
 
-class UserRoutes implements IRouter {
+class UserRoutes implements IRoutes {
     public router: Router;
-    private userController: UserController;
+    public controller: UserController;
 
     constructor(){
         this.router = Router();
-        this.userController = new UserController();
+        this.controller = new UserController();
         this.routes();
     }
 
-    public routes(): void {
-        this.router.get("/", this.userController.fetchAll);
-        this.router.get("/:id", this.userController.fetchAll);
 
-        this.router.post("/", this.userController.create);
-        this.router.put("/:id", this.userController.update);
-        this.router.delete("/:id", this.userController.delete);
+    public routes(): void{
+        this.router.get("/", this.controller.findAll);
+        this.router.get("/:id", this.controller.findByID);
+        
+        this.router.post("/", this.controller.create);
+        this.router.put("/:id", this.controller.update);
+        this.router.delete("/:id", this.controller.delete);
     }
 }
 
