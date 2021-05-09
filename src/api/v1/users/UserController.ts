@@ -51,10 +51,24 @@ class UserController implements IController {
         try {
             const {id} = req.params;
 
+            if(!id){
+                return Promise.resolve(res.send({status: 400, msg:"Provide the id User"}));
+            }
+
             const idUser: number = +id;
+            if(isNaN(idUser)){
+                return Promise.resolve(res.send({
+                    status : 400,
+                    msg : "ID must be integer"
+                }));    
+            }
+
             const user = await db.user.findByPk(idUser);
             if(user){
-                return Promise.resolve(res.send(user));
+                return Promise.resolve(res.send({
+                    status : 200,
+                    data : user
+                }));
             } else {
                 return Promise.resolve(res.send({
                     status: 404,
@@ -63,8 +77,11 @@ class UserController implements IController {
             }
 
         } catch (error) {
-            console.log(error)
-            return Promise.resolve(res.send("OKE"));
+            // console.log(error)
+            return Promise.resolve(res.send({
+                status : 500,
+                msg : error
+            }));
         }
     };
 
@@ -113,6 +130,13 @@ class UserController implements IController {
 
             const idUser = +id;
 
+            if(isNaN(idUser)){
+                return Promise.resolve(res.send({
+                    status : 400,
+                    msg : "ID must be integer"
+                }));    
+            }
+
             const {fullname, majors, email} = req.body;
             const user = {
                 fullname : fullname,
@@ -120,9 +144,7 @@ class UserController implements IController {
                 email : email
             };
 
-
-
-            const updated = await db.user.update({fullname, majors, email}, {where: {id : idUser} });
+            const updated = await db.user.update(user, {where: {id : idUser} });
             if(updated){
                 return Promise.resolve(res.send({
                     status: 200,
@@ -153,6 +175,22 @@ class UserController implements IController {
             }
 
             const idUser = +id;
+
+            if(isNaN(idUser)){
+                return Promise.resolve(res.send({
+                    status : 400,
+                    msg : "ID must be integer"
+                }));    
+            }
+
+            const isExist = await db.user.findByPk(idUser);
+
+            if(!isExist){
+                return Promise.resolve(res.send({
+                    status : 404,
+                    msg : "There is no data !"
+                }));    
+            }
 
             const deleteData = await db.user.destroy({where: {id:idUser}});
             
