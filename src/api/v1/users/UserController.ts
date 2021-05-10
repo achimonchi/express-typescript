@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import IController from "./IController";
+import UserDto from "./User.dto";
 
-const db = require("../../../db/models/index.js")
+const db = require("../../../db/models/index.js");
 
+// implements IController
 class UserController implements IController {
     public findAll = async (req: Request, res: Response): Promise<Response> => {
         try {
@@ -11,10 +13,12 @@ class UserController implements IController {
             let limitData: number = 5;
             let pageData: number = 0;
 
+            // cek apakah ada query limit atau tidak
             if(limit){
                 limitData = +limit;
             }
 
+            // cek apakah ada query page atau tidak
             if(page){
                 pageData = +page;
             }
@@ -88,11 +92,20 @@ class UserController implements IController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             const {fullname, majors, email} = req.body;
-            const user = {
-                fullname : fullname,
-                majors : majors,
-                email : email
-            };
+
+            const user = new UserDto(email, fullname, majors);
+
+            let validate: object = {flag:false};
+
+            validate = user.validate();
+
+            if(validate.flag === false){
+                let data = { 
+                    status: 400,
+                    msg : validate.msg
+                }
+                return Promise.resolve(res.send(data));
+            }
 
             const createdUser = await db.user.create(user);
             
@@ -102,7 +115,7 @@ class UserController implements IController {
                     msg: "User created !",
                     data : createdUser
                 }
-                return Promise.resolve(res.send(data));
+                return Promise.resolve(res.send(createdUser));
             } else {
                 let data = {
                     status : 400,
@@ -138,11 +151,28 @@ class UserController implements IController {
             }
 
             const {fullname, majors, email} = req.body;
-            const user = {
-                fullname : fullname,
-                majors : majors,
-                email : email
-            };
+
+            const user = new UserDto(email, fullname, majors);
+
+            let validate: object = {flag:false};
+
+            validate = user.validate();
+
+            if(validate.flag === false){
+                let data = { 
+                    status: 400,
+                    msg : validate.msg
+                }
+                return Promise.resolve(res.send(data));
+            }
+
+            const isExist = await db.user.findByPk(idUser);
+            if(!isExist){
+                return Promise.resolve(res.send({
+                    status : 404,
+                    msg : "There is no data !"
+                }));    
+            }
 
             const updated = await db.user.update(user, {where: {id : idUser} });
             if(updated){
