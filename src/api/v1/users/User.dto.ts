@@ -1,3 +1,8 @@
+
+/* 
+    class ini berfungsi sebagai patokan
+    untuk data transfer pada modul user
+*/
 class UserDto {
     public email: string;
     public fullname: string;
@@ -33,6 +38,7 @@ class UserDto {
         return this.majors;
     }
 
+    // method ini berguna untuk melakukan validasi
     public validate(): object{
         let err = [];
 

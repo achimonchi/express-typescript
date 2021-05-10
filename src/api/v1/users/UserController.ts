@@ -27,6 +27,7 @@ class UserController implements IController {
 
             const users = await db.user.findAndCountAll({limit: limitData, offset: offset});
 
+            // validate jika ada data atau tidak
             if(users.rows.length === 0){
                 return Promise.resolve(res.send({status: 404, msg: "There is no data !"}));    
             }
@@ -51,6 +52,7 @@ class UserController implements IController {
             }));
         }
     };
+    
     public findByID = async(req: Request, res: Response): Promise<Response> => {
         try {
             const {id} = req.params;
@@ -60,6 +62,11 @@ class UserController implements IController {
             }
 
             const idUser: number = +id;
+
+            /* 
+                validate jika parameter yang diinputpakn
+                bertipe number
+            */
             if(isNaN(idUser)){
                 return Promise.resolve(res.send({
                     status : 400,
@@ -93,10 +100,13 @@ class UserController implements IController {
         try {
             const {fullname, majors, email} = req.body;
 
+            // memasukkan data ke dalam userDTO
+
             const user = new UserDto(email, fullname, majors);
 
             let validate: object = {flag:false};
 
+            // melakukan validasi data
             validate = user.validate();
 
             if(validate.flag === false){
@@ -142,7 +152,11 @@ class UserController implements IController {
             }
 
             const idUser = +id;
-
+            
+            /* 
+                validate jika parameter yang diinputpakn
+                bertipe number
+            */
             if(isNaN(idUser)){
                 return Promise.resolve(res.send({
                     status : 400,
@@ -156,6 +170,8 @@ class UserController implements IController {
 
             let validate: object = {flag:false};
 
+
+            // melakukan proses validasi
             validate = user.validate();
 
             if(validate.flag === false){
@@ -166,6 +182,7 @@ class UserController implements IController {
                 return Promise.resolve(res.send(data));
             }
 
+            // cek apakah user dgn idUser, ada atau tidak
             const isExist = await db.user.findByPk(idUser);
             if(!isExist){
                 return Promise.resolve(res.send({
@@ -174,6 +191,7 @@ class UserController implements IController {
                 }));    
             }
 
+            // jika ada, lakukan update
             const updated = await db.user.update(user, {where: {id : idUser} });
             if(updated){
                 return Promise.resolve(res.send({
@@ -206,6 +224,10 @@ class UserController implements IController {
 
             const idUser = +id;
 
+            /* 
+                validate jika parameter yang diinputpakn
+                bertipe number
+            */
             if(isNaN(idUser)){
                 return Promise.resolve(res.send({
                     status : 400,
@@ -213,6 +235,7 @@ class UserController implements IController {
                 }));    
             }
 
+            // cek apakah user dgn idUser ada atau tidak
             const isExist = await db.user.findByPk(idUser);
 
             if(!isExist){
@@ -222,6 +245,7 @@ class UserController implements IController {
                 }));    
             }
 
+            // jika ada, lakukan delete
             const deleteData = await db.user.destroy({where: {id:idUser}});
             
             if(deleteData){
